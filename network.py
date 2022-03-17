@@ -1,12 +1,29 @@
 import numpy as np
 
 class Network:
-    def __init__(self) -> None:
-        self.w1 = np.random.randn(4, 7)
-        self.b1 = np.random.randn(7)
+    def __init__(self, lr, mu = 0.9, rho = 0.999) -> None:
+        self.lr = lr
 
-        self.w2 = np.random.randn(7, 3)
+        self.w1 = np.random.randn(4, 12)
+        self.b1 = np.random.randn(12)
+        self.w2 = np.random.randn(12, 3)
         self.b2 = np.random.randn(3)
+
+        # 动量法参数初始化
+        self.mu = mu
+        self.w1_v = 0
+        self.b1_v = 0
+        self.w2_v = 0
+        self.b2_v = 0
+
+        # RMSProp参数初始化
+        self.rho = rho
+        self.w1_r = 0
+        self.b1_r = 0
+        self.w2_r = 0
+        self.b2_r = 0
+
+        self.t = 0
 
     def ReLU(self, input:np.ndarray) -> np.ndarray:
         output = np.zeros(input.shape, dtype=input.dtype)
@@ -14,25 +31,113 @@ class Network:
             output[row] = 1 * (input[row] > 0) * input[row]
         return output
         
-    def softmax(self, input:np.ndarray) -> np.ndarray:
+    def Softmax(self, input:np.ndarray) -> np.ndarray:
         output = np.zeros(input.shape, dtype=input.dtype)
         for row in range(len(input)):
             output[row] = np.exp(input[row]) / np.sum(np.exp(input[row]))
         return output
 
-    def forward(self, input) -> np.ndarray:
-        output = np.dot(input, self.w1) + self.b1
-        output = self.ReLU(output)
-        output = np.dot(output, self.w2) + self.b2
-        output = self.ReLU(output)
-        output = self.softmax(output)
-        return output
+    def CrossEntropy(self, label) -> float:
+        self.label = label
+        loss = np.zeros(len(self.output7), dtype=np.float64)
+        for row in range(len(loss)):
+            j = label[row].argmax()
+            loss[row] = -np.log(self.output7[row][j])
 
-    def getPara(self) -> tuple:
-        return self.w1, self.b1, self.w2, self.b2
+        return loss.sum()
 
-    def updatePara(self, w1, b1, w2, b2) -> None:
-        self.w1 = w1
-        self.b1 = b1
-        self.w2 = w2
-        self.b2 = b2
+    def forward(self, input) -> None:
+        self.input = input
+        self.output1 = np.dot(input, self.w1)
+        self.output2 = self.output1 + self.b1
+        self.output3 = self.ReLU(self.output2)
+        self.output4 = np.dot(self.output3, self.w2)
+        self.output5 = self.output4 + self.b2
+        self.output6 = self.ReLU(self.output5)
+        self.output7 = self.Softmax(self.output6)
+
+    def backward(self) -> None:
+        self.d7 = - self.label / self.output7
+        self.d6 = self.output7 - self.label
+        self.d5 = np.zeros(self.d6.shape, dtype=np.float64)
+        for row in range(len(self.d5)):
+            self.d5[row] = 1 * (self.d6[row] > 0) * self.d6[row]
+        self.d4 = self.d5
+        self.d3 = np.dot(self.d4, self.w2.T)
+        self.d2 = np.zeros(self.d3.shape, dtype=np.float64)
+        for row in range(len(self.d2)):
+            self.d2[row] = 1 * (self.d3[row] > 0) * self.d3[row]
+        self.d1 = self.d2
+
+        self.w1_partial = np.dot(self.input.T, self.d1)
+        self.b1_partial = self.d2
+        self.w2_partial = np.dot(self.output3.T, self.d4)
+        self.b2_partial = self.d5
+
+    def SGD(self) -> None:
+        self.w1 = self.w1 - self.lr * self.w1_partial
+        self.b1 = self.b1 - self.lr * self.b1_partial
+        self.w2 = self.w2 - self.lr * self.w2_partial
+        self.b2 = self.b2 - self.lr * self.b2_partial
+    
+    def Momentum(self) -> None:
+        self.w1_v = self.mu * self.w1_v + self.w1_partial
+        self.b1_v = self.mu * self.b1_v + self.b1_partial
+        self.w2_v = self.mu * self.w2_v + self.w2_partial
+        self.b2_v = self.mu * self.b2_v + self.b2_partial
+
+        self.w1 = self.w1 - self.lr * self.w1_v
+        self.b1 = self.b1 - self.lr * self.b1_v
+        self.w2 = self.w2 - self.lr * self.w2_v
+        self.b2 = self.b2 - self.lr * self.b2_v
+
+    def RMSProp(self) -> None:
+        eps = 1e-7
+        self.w1_r = self.rho * self.w1_r + (1-self.rho)*(self.w1_partial*self.w1_partial)
+        self.b1_r = self.rho * self.b1_r + (1-self.rho)*(self.b1_partial*self.b1_partial)
+        self.w2_r = self.rho * self.w2_r + (1-self.rho)*(self.w2_partial*self.w2_partial)
+        self.b2_r = self.rho * self.b2_r + (1-self.rho)*(self.b2_partial*self.b2_partial)
+
+        self.w1 = self.w1 - self.lr / (np.sqrt(self.w1_r) + eps) * self.w1_partial
+        self.b1 = self.b1 - self.lr / (np.sqrt(self.b1_r) + eps) * self.b1_partial
+        self.w2 = self.w2 - self.lr / (np.sqrt(self.w2_r) + eps) * self.w2_partial
+        self.b2 = self.b2 - self.lr / (np.sqrt(self.b2_r) + eps) * self.b2_partial
+
+    def Adam(self) -> None:
+        self.t += 1
+        eps = 1e-7
+        self.w1_v = self.mu * self.w1_v + self.w1_partial
+        self.b1_v = self.mu * self.b1_v + self.b1_partial
+        self.w2_v = self.mu * self.w2_v + self.w2_partial
+        self.b2_v = self.mu * self.b2_v + self.b2_partial
+        
+        self.w1_r = self.rho * self.w1_r + (1-self.rho)*(self.w1_partial*self.w1_partial)
+        self.b1_r = self.rho * self.b1_r + (1-self.rho)*(self.b1_partial*self.b1_partial)
+        self.w2_r = self.rho * self.w2_r + (1-self.rho)*(self.w2_partial*self.w2_partial)
+        self.b2_r = self.rho * self.b2_r + (1-self.rho)*(self.b2_partial*self.b2_partial)
+
+        w1_v_ = self.w1_v / (1-self.mu**self.t)
+        b1_v_ = self.b1_v / (1-self.mu**self.t)
+        w2_v_ = self.w2_v / (1-self.mu**self.t)
+        b2_v_ = self.b2_v / (1-self.mu**self.t)
+
+        w1_r_ = self.w1_r / (1-self.rho**self.t)
+        b1_r_ = self.b1_r / (1-self.rho**self.t)
+        w2_r_ = self.w2_r / (1-self.rho**self.t)
+        b2_r_ = self.b2_r / (1-self.rho**self.t)
+
+        self.w1 = self.w1 - self.lr / (np.sqrt(w1_r_) + eps) * w1_v_
+        self.b1 = self.b1 - self.lr / (np.sqrt(b1_r_) + eps) * b1_v_
+        self.w2 = self.w2 - self.lr / (np.sqrt(w2_r_) + eps) * w2_v_
+        self.b2 = self.b2 - self.lr / (np.sqrt(b2_r_) + eps) * b2_v_
+
+    def CalculateAccuracy(self, label) -> int:
+        accuracy = 0
+        for row in range(len(self.output7)):
+            i = self.output7[row].argmax()
+            j = label[row].argmax()
+            print(self.output7[row], label[row])
+            if i==j:
+                accuracy += 1
+
+        return accuracy

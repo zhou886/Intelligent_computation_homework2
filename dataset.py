@@ -6,23 +6,23 @@ class Dataset:
         self.batch_size = batch_size
 
         if train:
-            self.size = 120
-            self.data = np.zeros((120, 5), dtype=np.float64)
             with open(path, 'r') as f:
                 line_list = f.readlines()
-                for row in range(120):
+                self.size = int(len(line_list) * 0.8)
+                self.data = np.zeros((self.size, 5), dtype=np.float64)
+                for row in range(self.size):
                     tmp_list = line_list[row].strip().split(',')
                     for col in range(5):
                         self.data[row][col] = float(tmp_list[col])
         else:
-            self.size = 30
-            self.data = np.zeros((30, 5), dtype=np.float64)
             with open(path, 'r') as f:
                 line_list = f.readlines()
-                for row in range(120, 150):
+                self.size = len(line_list) - int(len(line_list) * 0.8)
+                self.data = np.zeros((self.size, 5), dtype=np.float64)
+                for row in range(int(len(line_list) * 0.8), len(line_list)):
                     tmp_list = line_list[row].strip().split(',')
                     for col in range(5):
-                        self.data[row-120][col] = float(tmp_list[col])
+                        self.data[row-int(len(line_list) * 0.8)][col] = float(tmp_list[col])
 
         if shuffle:
             np.random.shuffle(self.data)
@@ -41,7 +41,7 @@ class Dataset:
         return self
 
     def __next__(self):
-        if self.counter > self.size:
+        if self.counter*self.batch_size >= self.size or (self.counter+1)*self.batch_size >= self.size:
             raise StopIteration
         self.counter += 1
         return self[self.counter]
