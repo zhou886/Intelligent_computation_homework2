@@ -39,10 +39,10 @@ class Network:
 
     def CrossEntropy(self, label) -> float:
         self.label = label
-        loss = np.zeros(len(self.output7), dtype=np.float64)
+        loss = np.zeros(len(self.output6), dtype=np.float64)
         for row in range(len(loss)):
             j = label[row].argmax()
-            loss[row] = -np.log(self.output7[row][j])
+            loss[row] = -np.log(self.output6[row][j])
 
         return loss.sum()
 
@@ -53,15 +53,11 @@ class Network:
         self.output3 = self.ReLU(self.output2)
         self.output4 = np.dot(self.output3, self.w2)
         self.output5 = self.output4 + self.b2
-        self.output6 = self.ReLU(self.output5)
-        self.output7 = self.Softmax(self.output6)
+        self.output6 = self.Softmax(self.output5)
 
     def backward(self) -> None:
-        self.d7 = - self.label / self.output7
-        self.d6 = self.output7 - self.label
-        self.d5 = np.zeros(self.d6.shape, dtype=np.float64)
-        for row in range(len(self.d5)):
-            self.d5[row] = 1 * (self.d6[row] > 0) * self.d6[row]
+        self.d6 = - self.label / self.output6
+        self.d5 = self.output6 - self.label
         self.d4 = self.d5
         self.d3 = np.dot(self.d4, self.w2.T)
         self.d2 = np.zeros(self.d3.shape, dtype=np.float64)
@@ -133,10 +129,9 @@ class Network:
 
     def CalculateAccuracy(self, label) -> int:
         accuracy = 0
-        for row in range(len(self.output7)):
-            i = self.output7[row].argmax()
+        for row in range(len(self.output6)):
+            i = self.output6[row].argmax()
             j = label[row].argmax()
-            print(self.output7[row], label[row])
             if i==j:
                 accuracy += 1
 
