@@ -2,7 +2,7 @@ from dataset import Dataset
 from network import Network
 
 def train():
-    lr = 0.0001
+    lr = 0.00001
     batch_size = 1
     epoch = 200
 
@@ -24,7 +24,7 @@ def train():
             total_loss_in_train_set += network_module.CrossEntropy(label)
             total_accuracy_in_train_set += network_module.CalculateAccuracy(label)
             network_module.backward()
-            network_module.SGD()
+            network_module.RMSProp()
 
         total_accuracy_in_train_set /= train_set.size
 
