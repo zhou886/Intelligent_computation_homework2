@@ -46,5 +46,9 @@ class Dataset:
         self.counter += 1
         return self[self.counter]
 
+class KFold:
+    def __init__(self) -> None:
+        pass
+
 if __name__ == '__main__':
     set = Dataset('./dataNoisy.txt', shuffle=True, train = True, batch_size=1)

@@ -3,7 +3,7 @@ from network import Network
 
 def train():
     lr = 0.00001
-    batch_size = 1
+    batch_size = 10
     epoch = 200
 
     path = './dataNoisy.txt'
@@ -24,7 +24,7 @@ def train():
             total_loss_in_train_set += network_module.CrossEntropy(label)
             total_accuracy_in_train_set += network_module.CalculateAccuracy(label)
             network_module.backward()
-            network_module.RMSProp()
+            network_module.SGD()
 
         total_accuracy_in_train_set /= train_set.size
 

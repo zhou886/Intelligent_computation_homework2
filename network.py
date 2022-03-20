@@ -4,11 +4,11 @@ class Network:
     def __init__(self, lr, mu = 0.9, rho = 0.999) -> None:
         self.lr = lr
 
-        self.w1 = np.random.normal(0, 0.5, (4,12))
-        self.b1 = np.random.normal(0, 0.5, (1,12))
-        self.w2 = np.random.normal(0, 0.5, (12,12))
-        self.b2 = np.random.normal(0, 0.5, (1,12))
-        self.w3 = np.random.normal(0, 0.5, (12,3))
+        self.w1 = np.random.normal(0, 0.5, (4,7))
+        self.b1 = np.random.normal(0, 0.5, (1,7))
+        self.w2 = np.random.normal(0, 0.5, (7,15))
+        self.b2 = np.random.normal(0, 0.5, (1,15))
+        self.w3 = np.random.normal(0, 0.5, (15,3))
         self.b3 = np.random.normal(0, 0.5, (1,3))
 
         # 动量法参数初始化
@@ -166,7 +166,6 @@ class Network:
     def CalculateAccuracy(self, label) -> int:
         accuracy = 0
         for row in range(len(self.output9)):
-            print(self.output9, label)
             i = self.output9[row].argmax()
             j = label[row].argmax()
             if i==j:
