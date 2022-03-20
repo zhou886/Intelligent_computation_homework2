@@ -1,7 +1,13 @@
 import numpy as np
+import time
 
 class Network:
     def __init__(self, lr, mu = 0.9, rho = 0.999) -> None:
+        """
+        lr      学习率
+        mu      动量法超参数
+        rho     RMSprop法超参数
+        """
         self.lr = lr
 
         self.w1 = np.random.normal(0, 0.5, (4,7))
@@ -53,6 +59,9 @@ class Network:
         return loss.sum()
 
     def forward(self, input) -> None:
+        """
+        对输入的input进行前向传播,结果保存在self.output内
+        """
         self.input = input
         self.output1 = np.dot(input, self.w1)
         self.output2 = self.output1 + self.b1
@@ -65,6 +74,9 @@ class Network:
         self.output9 = self.Softmax(self.output8)
 
     def backward(self) -> None:
+        """
+        对得到的损失进行反向传播计算各个参数的梯度
+        """
         self.d9 = -self.label / self.output9
         self.d8 = self.output9 - self.label
         self.d7 = self.d8
@@ -87,6 +99,9 @@ class Network:
         self.b3_partial = self.d8
 
     def SGD(self) -> None:
+        """
+        随机梯度下降,若Dataset的batch_size大于1则可作为小批量梯度下降
+        """
         self.w1 = self.w1 - self.lr * self.w1_partial
         self.b1 = self.b1 - self.lr * self.b1_partial
         self.w2 = self.w2 - self.lr * self.w2_partial
@@ -95,12 +110,15 @@ class Network:
         self.b3 = self.b3 - self.lr * self.b3_partial
     
     def Momentum(self) -> None:
+        """
+        动量法
+        """
         self.w1_v = self.mu * self.w1_v + self.w1_partial
         self.b1_v = self.mu * self.b1_v + self.b1_partial
         self.w2_v = self.mu * self.w2_v + self.w2_partial
         self.b2_v = self.mu * self.b2_v + self.b2_partial
-        self.w3_v = self.mu * self.w3_v + self.w2_partial
-        self.b3_v = self.mu * self.b3_v + self.b2_partial
+        self.w3_v = self.mu * self.w3_v + self.w3_partial
+        self.b3_v = self.mu * self.b3_v + self.b3_partial
 
         self.w1 = self.w1 - self.lr * self.w1_v
         self.b1 = self.b1 - self.lr * self.b1_v
@@ -110,6 +128,9 @@ class Network:
         self.b3 = self.b3 - self.lr * self.b3_v
 
     def RMSProp(self) -> None:
+        """
+        自适应梯度下降法
+        """
         eps = 1e-7
         self.w1_r = self.rho * self.w1_r + (1-self.rho)*(self.w1_partial*self.w1_partial)
         self.b1_r = self.rho * self.b1_r + (1-self.rho)*(self.b1_partial*self.b1_partial)
@@ -132,8 +153,8 @@ class Network:
         self.b1_v = self.mu * self.b1_v + self.b1_partial
         self.w2_v = self.mu * self.w2_v + self.w2_partial
         self.b2_v = self.mu * self.b2_v + self.b2_partial
-        self.w3_v = self.mu * self.w3_v + self.w2_partial
-        self.b3_v = self.mu * self.b3_v + self.b2_partial
+        self.w3_v = self.mu * self.w3_v + self.w3_partial
+        self.b3_v = self.mu * self.b3_v + self.b3_partial
         
         self.w1_r = self.rho * self.w1_r + (1-self.rho)*(self.w1_partial*self.w1_partial)
         self.b1_r = self.rho * self.b1_r + (1-self.rho)*(self.b1_partial*self.b1_partial)
